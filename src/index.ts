@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
+import postsRoute from './routes/ticket.routes.js';
 import registerRoute from './routes/register.routes.js';
 import { cors } from 'hono/cors';
 
@@ -18,6 +19,7 @@ app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
 
+app.route('/api/tickets', postsRoute)
 app.route('/api/auth', registerRoute);
 
 serve({
