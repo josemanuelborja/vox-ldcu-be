@@ -11,10 +11,17 @@ export async function getAllPosts(context: Context) {
 
     if (user_id) {
       [rows] = await pool.query<PostModel[]>(
-        `SELECT * FROM ticket WHERE user_id = ?`, [user_id]
+       `SELECT ticket.*, user.full_name as submitted_by
+        FROM ticket
+        JOIN user ON ticket.user_id = user.id
+        WHERE ticket.user_id = ?`, [user_id]
       );
     } else {
-      [rows] = await pool.query<PostModel[]>(`SELECT * FROM ticket`);
+      [rows] = await pool.query<PostModel[]>(
+        `SELECT ticket.*, user.full_name as submitted_by
+         FROM ticket
+         JOIN user ON ticket.user_id = user.id`
+      );
     }
 
     return context.json(rows, 200);
@@ -27,13 +34,14 @@ export async function getAllPosts(context: Context) {
 export async function getPostById(context: Context) {
   try { 
     const id = context.req.param('id');
-    const [rows] = await pool.query<PostModel[]>(`SELECT * FROM Ticket WHERE id = ?`, [id]);
+    const [rows] = await pool.query<PostModel[]>(
+      `SELECT ticket.*, user.full_name as submitted_by
+       FROM ticket
+       JOIN user ON ticket.user_id = user.id
+       WHERE ticket.id = ?`, [id]
+    );
     const data = rows[0];
-
-    if (data) {
-      return context.json(data, 200);
-    }
-
+    if (data) return context.json(data, 200);
     return context.json(null, 200);
   } catch (error) {
     console.log(error);
@@ -80,7 +88,12 @@ export async function createPost(context: Context) {
     );
 
     if (result.insertId) {
-      const [data] = await pool.query<PostModel[]>(`SELECT * FROM ticket WHERE id = ?`, [result.insertId]);
+      const [data] = await pool.query<PostModel[]>(
+        `SELECT ticket.*, user.full_name as submitted_by
+         FROM ticket
+         JOIN user ON ticket.user_id = user.id
+         WHERE ticket.id = ?`, [result.insertId]
+      );
       return context.json(data[0], 201);
     }
 

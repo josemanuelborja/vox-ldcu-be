@@ -18,5 +18,5 @@ export interface CreatePostModel {
   type_of_report: 'complain' | 'suggestion';
   category: 'facilities' | 'faculty' | 'administration' | 'others';
   description: string;
-  attachment?: string; 
+  attachment?: string | null; 
 }
