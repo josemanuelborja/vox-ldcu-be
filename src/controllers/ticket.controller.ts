@@ -14,13 +14,15 @@ export async function getAllPosts(context: Context) {
        `SELECT ticket.*, user.full_name as submitted_by
         FROM ticket
         JOIN user ON ticket.user_id = user.id
-        WHERE ticket.user_id = ?`, [user_id]
+        WHERE ticket.user_id = ?
+        ORDER BY ticket.create_time DESC`, [user_id]
       );
     } else {
       [rows] = await pool.query<PostModel[]>(
         `SELECT ticket.*, user.full_name as submitted_by
          FROM ticket
-         JOIN user ON ticket.user_id = user.id`
+         JOIN user ON ticket.user_id = user.id
+         ORDER BY ticket.create_time DESC`
       );
     }
 
@@ -117,6 +119,29 @@ export async function deletePostById(context: Context) {
     }
 
     return context.json({ message: "Report not found" }, 404);
+  } catch (error) {
+    console.log(error);
+    return context.json({ message: "Internal server error" }, 500);
+  }
+}
+
+export async function updateTicketStatus(context: Context) {
+  try {
+    const id = context.req.param('id');
+    const body = await context.req.json();
+
+    if (!body.status) return context.json({ message: "Status is required" }, 400);
+
+    const [result] = await pool.query<ResultSetHeader>(
+      `UPDATE ticket SET status = ? WHERE id = ?`,
+      [body.status, id]
+    );
+
+    if (result.affectedRows > 0) {
+      return context.json({ message: "Status updated successfully" }, 200);
+    }
+
+    return context.json({ message: "Ticket not found" }, 404);
   } catch (error) {
     console.log(error);
     return context.json({ message: "Internal server error" }, 500);
