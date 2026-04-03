@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import postsRoute from './routes/ticket.routes.js';
 import registerRoute from './routes/register.routes.js';
 import responseRoute from "./routes/response.routes.js";
+import otpRoute from "./routes/otp.routes.js";
 import { cors } from 'hono/cors';
 
 const app = new Hono()
@@ -23,6 +24,7 @@ app.get('/', (c) => {
 app.route('/api/tickets', postsRoute)
 app.route('/api/auth', registerRoute);
 app.route('/api/responses', responseRoute);
+app.route('/api/otp', otpRoute);
 
 
 serve({
