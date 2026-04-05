@@ -2,6 +2,10 @@ import type { Context } from "hono";
 import pool from "../config/db.js";
 import type { UserModel, RegisterModel, LoginModel } from "../models/user.model.js";
 import type { ResultSetHeader } from "mysql2";
+import jwt from "jsonwebtoken"; 
+import 'dotenv/config';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'voxldcu_secret_key';
 
 export async function register(context: Context) {
   try {
@@ -55,12 +59,16 @@ export async function login(context: Context) {
     if (!body.password) return context.json({ message: "Password is required" }, 400);
 
     if (body.email === 'admin@liceo.edu.ph' && body.password === '123123123') {
-      return context.json({
+      const adminData = {
         id: 0,
         full_name: 'Admin',
         email: 'admin@liceo.edu.ph',
         role: 'admin'
-      }, 200);
+      };
+
+      const token = jwt.sign(adminData, JWT_SECRET, { expiresIn: '1d' });
+
+      return context.json({ ...adminData, token }, 200);
     }
 
     const [rows] = await pool.query<UserModel[]>(
@@ -74,19 +82,22 @@ export async function login(context: Context) {
       return context.json({ message: "Invalid email or password" }, 401);
     }
 
-    return context.json({
+    const userData = {
       id: user.id,
       full_name: user.full_name,
       student_id: user.student_id,
       email: user.email,
       role: 'student'
-    }, 200);
+    };
+
+    const token = jwt.sign(userData, JWT_SECRET, { expiresIn: '1d' });
+
+    return context.json({ ...userData, token }, 200);
 
   } catch (error) {
     console.log(error);
     return context.json({ message: "Internal server error" }, 500);
   }
-  
 }
 
 export async function resetPassword(context: Context) {
