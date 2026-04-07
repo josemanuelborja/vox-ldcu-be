@@ -122,3 +122,22 @@ export async function resetPassword(context: Context) {
     return context.json({ message: "Internal server error" }, 500);
   }
 }
+
+export async function checkEmail(context: Context) {
+  try {
+    const body = await context.req.json();
+
+    const [rows] = await pool.query<UserModel[]>(
+      `SELECT * FROM User WHERE email = ?`, [body.email]
+    );
+
+    if (rows.length === 0) {
+      return context.json({ message: "Email not found" }, 404);
+    }
+
+    return context.json({ message: "Email found" }, 200);
+  } catch (error) {
+    console.log(error);
+    return context.json({ message: "Internal server error" }, 500);
+  }
+}
