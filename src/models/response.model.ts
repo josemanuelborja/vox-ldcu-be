@@ -13,3 +13,7 @@ export interface CreateResponseModel {
   admin_name: string;
   message: string;
 }
+
+export interface UpdateResponseModel {
+  message: string;
+}
