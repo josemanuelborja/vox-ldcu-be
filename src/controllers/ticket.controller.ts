@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import pool from "../config/db.js";
-import type { CreatePostModel, PostModel } from "../models/ticket.model.js";
+import type { CreatePostModel, PostModel, UpdatePostModel } from "../models/ticket.model.js";
 import type { ResultSetHeader } from "mysql2";
 
 export async function getAllPosts(context: Context) {
@@ -139,6 +139,34 @@ export async function updateTicketStatus(context: Context) {
 
     if (result.affectedRows > 0) {
       return context.json({ message: "Status updated successfully" }, 200);
+    }
+
+    return context.json({ message: "Ticket not found" }, 404);
+  } catch (error) {
+    console.log(error);
+    return context.json({ message: "Internal server error" }, 500);
+  }
+}
+
+export async function updatePost(context: Context) {
+  try {
+    const id = context.req.param('id');
+    const body: UpdatePostModel = await context.req.json();
+
+    if (!body.title) return context.json({ message: "Title is required" }, 400);
+
+    const [result] = await pool.query<ResultSetHeader>(
+      `UPDATE ticket SET title = ?, type_of_report = ?, category = ?, description = ? WHERE id = ?`,
+      [body.title, body.type_of_report, body.category, body.description, id]
+    );
+
+    if (result.affectedRows > 0) {
+      const [data] = await pool.query<PostModel[]>(
+        `SELECT ticket.*, user.full_name as submitted_by
+         FROM ticket JOIN user ON ticket.user_id = user.id
+         WHERE ticket.id = ?`, [id]
+      );
+      return context.json(data[0], 200);
     }
 
     return context.json({ message: "Ticket not found" }, 404);

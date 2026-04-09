@@ -20,3 +20,10 @@ export interface CreatePostModel {
   description: string;
   attachment?: string | null; 
 }
+
+export interface UpdatePostModel {
+  title: string;
+  type_of_report: 'complain' | 'suggestion';
+  category: 'facilities' | 'faculty' | 'administration' | 'others';
+  description: string;
+}
