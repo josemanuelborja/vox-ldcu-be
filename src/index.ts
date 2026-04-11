@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
+import { serveStatic } from '@hono/node-server/serve-static';
 import postsRoute from './routes/ticket.routes.js';
 import registerRoute from './routes/register.routes.js';
 import responseRoute from "./routes/response.routes.js";
@@ -16,6 +17,8 @@ app.use(cors({
   maxAge: 600,
   credentials: true,
 }));
+
+app.use('/uploads/*', serveStatic({ root: './' }));
 
 app.get('/', (c) => {
   return c.text('Hello Hono!')

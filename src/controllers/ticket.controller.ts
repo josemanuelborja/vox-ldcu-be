@@ -53,47 +53,41 @@ export async function getPostById(context: Context) {
 
 export async function createPost(context: Context) {
   try {
-    const body: CreatePostModel = await context.req.json();
+    const body = await context.req.parseBody(); 
 
-    if (!body.user_id) {
-      return context.json({ message: "User ID is required" }, 400);
-    }
+    if (!body.user_id) return context.json({ message: "User ID is required" }, 400);
+    if (!body.title) return context.json({ message: "Title is required" }, 400);
+    if (!body.type_of_report) return context.json({ message: "Type of report is required" }, 400);
+    if (!body.category) return context.json({ message: "Category is required" }, 400);
+    if (!body.description) return context.json({ message: "Description is required" }, 400);
 
-    if (!body.title) {
-      return context.json({ message: "Title is required" }, 400);
-    }
+    let filename = null;
+    const file = body['attachment'] as File;
 
-    if (!body.type_of_report) {
-      return context.json({ message: "Type of report is required" }, 400);
-    }
+    if (file && file.name) {
+      const fs = await import('fs');
+      const path = await import('path');
 
-    if (!body.category) {
-      return context.json({ message: "Category is required" }, 400);
-    }
+      const uploadDir = './uploads';
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
+      }
 
-    if (!body.description) {
-      return context.json({ message: "Description is required" }, 400);
+      filename = `${Date.now()}-${file.name}`;
+      const buffer = await file.arrayBuffer();
+      fs.writeFileSync(path.join(uploadDir, filename), Buffer.from(buffer));
     }
 
     const [result] = await pool.query<ResultSetHeader>(
-      `INSERT INTO Ticket 
-      (user_id, title, type_of_report, category, description, attachment) 
-      VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        body.user_id,
-        body.title,
-        body.type_of_report,
-        body.category,
-        body.description,
-        body.attachment || null
-      ]
+      `INSERT INTO ticket (user_id, title, type_of_report, category, description, attachment)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [body.user_id, body.title, body.type_of_report, body.category, body.description, filename]
     );
 
     if (result.insertId) {
       const [data] = await pool.query<PostModel[]>(
         `SELECT ticket.*, user.full_name as submitted_by
-         FROM ticket
-         JOIN user ON ticket.user_id = user.id
+         FROM ticket JOIN user ON ticket.user_id = user.id
          WHERE ticket.id = ?`, [result.insertId]
       );
       return context.json(data[0], 201);
