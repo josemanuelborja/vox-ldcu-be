@@ -4,6 +4,7 @@ import type { UserModel, RegisterModel, LoginModel } from "../models/user.model.
 import type { ResultSetHeader } from "mysql2";
 import jwt from "jsonwebtoken"; 
 import 'dotenv/config';
+import bcrypt from 'bcrypt';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'voxldcu_secret_key';
 
@@ -35,9 +36,11 @@ export async function register(context: Context) {
       return context.json({ message: "Email already registered" }, 400);
     }
 
+    const hashedPassword = await bcrypt.hash(body.password, 10);
+
     const [result] = await pool.query<ResultSetHeader>(
       `INSERT INTO User (full_name, student_id, email, password) VALUES (?, ?, ?, ?)`,
-      [body.full_name, body.student_id, body.email, body.password]
+      [body.full_name, body.student_id, body.email, hashedPassword]
     );
 
     if (result.insertId) {
@@ -72,13 +75,19 @@ export async function login(context: Context) {
     }
 
     const [rows] = await pool.query<UserModel[]>(
-      `SELECT * FROM User WHERE email = ? AND password = ?`,
-      [body.email, body.password]
+      `SELECT * FROM User WHERE email = ?`,
+      [body.email]
     );
 
     const user = rows[0];
 
     if (!user) {
+      return context.json({ message: "Invalid email or password" }, 401);
+    }
+
+    const isMatch = await bcrypt.compare(body.password, user.password);
+
+    if (!isMatch) {
       return context.json({ message: "Invalid email or password" }, 401);
     }
 
@@ -107,9 +116,11 @@ export async function resetPassword(context: Context) {
     if (!body.email) return context.json({ message: "Email is required" }, 400);
     if (!body.password) return context.json({ message: "Password is required" }, 400);
 
+    const hashedPassword = await bcrypt.hash(body.password, 10);
+
     const [result] = await pool.query<ResultSetHeader>(
       `UPDATE User SET password = ? WHERE email = ?`,
-      [body.password, body.email]
+      [hashedPassword, body.email]
     );
 
     if (result.affectedRows > 0) {
