@@ -47,7 +47,7 @@ export async function sendOtp(context: Context) {
       html: `
         <h2>Password Reset Code</h2>
         <p>Your OTP code is: <strong>${code}</strong></p>
-        <p>This code expires in 10 minutes.</p>
+        <p>This code expires in 3 minutes.</p>
       `
     });
 
