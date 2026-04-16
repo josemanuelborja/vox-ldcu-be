@@ -8,7 +8,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'voxldcu@gmail.com', 
-    pass: 'tgew fieb cpks jgqe'    
+    pass: 'cejw oqui mjrb kjoq'    
   }
 });
 
@@ -29,13 +29,15 @@ export async function sendOtp(context: Context) {
       return context.json({ message: "Email not found" }, 404);
     }
 
-    // Generate 4-digit OTP
-    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    await pool.query(`DELETE FROM otp WHERE email = ?`, [email]);
 
-    // Save OTP sa database — expires after 10 minutes
+    // Generate 4-digit OTP
+    const code = Math.floor(1000 + Math.random() * 9000).toString();  // Mrandom 0.5 x 9000 = 4500 + 1000 = 5500
+
+    // Save OTP sa database — expires after 3 minutes
     await pool.query<ResultSetHeader>(
       `INSERT INTO otp (email, code, expires_at) 
-       VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 3 MINUTE))`,
+       VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 3 MINUTE))`, // iya rang dugangan ug 3mins ang realtime
       [email, code]
     );
 

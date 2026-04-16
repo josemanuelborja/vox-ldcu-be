@@ -26,8 +26,8 @@ export async function createResponse(context: Context) {
     if (!body.message) return context.json({ message: "Message is required" }, 400);
 
     const [result] = await pool.query<ResultSetHeader>(
-      `INSERT INTO ticket_response (ticket_id, admin_name, message) VALUES (?, ?, ?)`,
-      [body.ticket_id, body.admin_name || 'Admin', body.message]
+      `INSERT INTO ticket_response (ticket_id, name, message) VALUES (?, ?, ?)`,
+      [body.ticket_id, body.name || 'Admin', body.message]
     );
 
     if (result.insertId) {
